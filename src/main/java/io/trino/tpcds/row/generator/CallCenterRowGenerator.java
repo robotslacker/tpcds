@@ -20,8 +20,6 @@ import io.trino.tpcds.SlowlyChangingDimensionUtils.SlowlyChangingDimensionKey;
 import io.trino.tpcds.row.CallCenterRow;
 import io.trino.tpcds.type.Decimal;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -61,7 +59,6 @@ import static io.trino.tpcds.type.Address.makeAddressForColumn;
 import static io.trino.tpcds.type.Date.JULIAN_DATA_START_DATE;
 import static java.lang.String.format;
 
-@NotThreadSafe
 public class CallCenterRowGenerator
         extends AbstractRowGenerator
 {

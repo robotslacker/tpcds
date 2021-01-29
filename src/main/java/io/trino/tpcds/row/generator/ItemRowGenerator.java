@@ -22,8 +22,6 @@ import io.trino.tpcds.distribution.ItemsDistributions;
 import io.trino.tpcds.row.ItemRow;
 import io.trino.tpcds.type.Decimal;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -71,7 +69,6 @@ import static io.trino.tpcds.random.RandomValueGenerator.generateWord;
 import static io.trino.tpcds.type.Decimal.multiply;
 import static java.lang.String.format;
 
-@NotThreadSafe
 public class ItemRowGenerator
         extends AbstractRowGenerator
 {
@@ -94,7 +91,6 @@ public class ItemRowGenerator
     public RowGeneratorResult generateRowAndChildRows(long rowNumber, Session session, RowGenerator parentRowGenerator, RowGenerator childRowGenerator)
     {
         long nullBitMap = createNullBitMap(ITEM, getRandomNumberStream(I_NULLS));
-        long iItemSk = rowNumber;
 
         List<Integer> managerIdRange = ItemsDistributions.pickRandomManagerIdRange(UNIFIED, getRandomNumberStream(I_MANAGER_ID));
         long iManagerId = generateUniformRandomKey(managerIdRange.get(0), managerIdRange.get(1), getRandomNumberStream(I_MANAGER_ID));
@@ -193,7 +189,7 @@ public class ItemRowGenerator
         }
 
         ItemRow row = new ItemRow(nullBitMap,
-                iItemSk,
+                rowNumber,
                 iItemId,
                 iRecStartDateId,
                 iRecEndDateId,

@@ -20,8 +20,6 @@ import io.trino.tpcds.row.TableRow;
 import io.trino.tpcds.row.WebSalesRow;
 import io.trino.tpcds.type.Pricing;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +66,6 @@ import static io.trino.tpcds.generator.WebSalesGeneratorColumn.WS_WEB_SITE_SK;
 import static io.trino.tpcds.random.RandomValueGenerator.generateUniformRandomInt;
 import static io.trino.tpcds.type.Pricing.generatePricingForSalesTable;
 
-@NotThreadSafe
 public class WebSalesRowGenerator
         extends AbstractRowGenerator
 {
@@ -184,8 +181,6 @@ public class WebSalesRowGenerator
             wsShipAddrSk = generateJoinKey(WS_SHIP_ADDR_SK, getRandomNumberStream(WS_SHIP_ADDR_SK), CUSTOMER_ADDRESS, 2, scaling);
         }
 
-        long wsOrderNumber = rowNumber;
-
         return new OrderInfo(wsSoldDateSk,
                 wsSoldTimeSk,
                 wsBillCustomerSk,
@@ -196,7 +191,7 @@ public class WebSalesRowGenerator
                 wsShipCdemoSk,
                 wsShipHdemoSK,
                 wsShipAddrSk,
-                wsOrderNumber);
+                rowNumber);
     }
 
     private static class OrderInfo

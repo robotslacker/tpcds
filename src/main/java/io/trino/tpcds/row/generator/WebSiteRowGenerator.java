@@ -21,8 +21,6 @@ import io.trino.tpcds.row.WebSiteRow;
 import io.trino.tpcds.type.Address;
 import io.trino.tpcds.type.Decimal;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -57,7 +55,6 @@ import static io.trino.tpcds.type.Address.makeAddressForColumn;
 import static io.trino.tpcds.type.Decimal.ZERO;
 import static java.lang.String.format;
 
-@NotThreadSafe
 public class WebSiteRowGenerator
         extends AbstractRowGenerator
 {
@@ -72,7 +69,6 @@ public class WebSiteRowGenerator
     public RowGeneratorResult generateRowAndChildRows(long rowNumber, Session session, RowGenerator parentRowGenerator, RowGenerator childRowGenerator)
     {
         long nullBitMap = createNullBitMap(WEB_SITE, getRandomNumberStream(WEB_NULLS));
-        long webSiteSk = rowNumber;
         String webClass = "Unknown";
 
         SlowlyChangingDimensionKey slowlyChangingDimensionKey = computeScdKey(WEB_SITE, rowNumber);
@@ -196,7 +192,7 @@ public class WebSiteRowGenerator
         }
 
         WebSiteRow row = new WebSiteRow(nullBitMap,
-                webSiteSk,
+                rowNumber,
                 webSiteId,
                 webRecStartDateId,
                 webRecEndDateId,

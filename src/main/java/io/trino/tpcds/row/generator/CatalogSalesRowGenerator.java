@@ -22,8 +22,6 @@ import io.trino.tpcds.row.TableRow;
 import io.trino.tpcds.type.Decimal;
 import io.trino.tpcds.type.Pricing;
 
-import javax.annotation.concurrent.NotThreadSafe;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +67,6 @@ import static io.trino.tpcds.generator.CatalogSalesGeneratorColumn.CS_WAREHOUSE_
 import static io.trino.tpcds.random.RandomValueGenerator.generateUniformRandomInt;
 import static io.trino.tpcds.type.Pricing.generatePricingForSalesTable;
 
-@NotThreadSafe
 public class CatalogSalesRowGenerator
         extends AbstractRowGenerator
 {
@@ -216,8 +213,6 @@ public class CatalogSalesRowGenerator
             csShipAddrSk = generateJoinKey(CS_SHIP_ADDR_SK, getRandomNumberStream(CS_SHIP_ADDR_SK), CUSTOMER_ADDRESS, 2, scaling);
         }
 
-        long csOrderNumber = rowNumber;
-
         return new OrderInfo(csSoldDateSk,
                 csSoldTimeSk,
                 csCallCenterSk,
@@ -229,7 +224,7 @@ public class CatalogSalesRowGenerator
                 csShipCdemoSk,
                 csShipHdemoSk,
                 csShipAddrSk,
-                csOrderNumber);
+                rowNumber);
     }
 
     private class OrderInfo

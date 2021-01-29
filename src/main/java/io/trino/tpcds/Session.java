@@ -14,20 +14,23 @@
 
 package io.trino.tpcds;
 
-import java.util.Optional;
+import org.apache.hadoop.fs.FileSystem;
 
-import static io.trino.tpcds.Options.DEFAULT_DIRECTORY;
-import static io.trino.tpcds.Options.DEFAULT_DO_NOT_TERMINATE;
-import static io.trino.tpcds.Options.DEFAULT_NO_SEXISM;
-import static io.trino.tpcds.Options.DEFAULT_NULL_STRING;
-import static io.trino.tpcds.Options.DEFAULT_OVERWRITE;
-import static io.trino.tpcds.Options.DEFAULT_PARALLELISM;
-import static io.trino.tpcds.Options.DEFAULT_SCALE;
-import static io.trino.tpcds.Options.DEFAULT_SEPARATOR;
-import static io.trino.tpcds.Options.DEFAULT_SUFFIX;
+import java.util.Optional;
 
 public class Session
 {
+    public static final int DEFAULT_SCALE = 1;
+    public static final String DEFAULT_DIRECTORY = ".";
+    public static final String DEFAULT_SUFFIX = ".dat";
+    public static final String DEFAULT_TABLE = null;
+    public static final String DEFAULT_NULL_STRING = "";
+    public static final char DEFAULT_SEPARATOR = '|';
+    public static final boolean DEFAULT_DO_NOT_TERMINATE = false;
+    public static final boolean DEFAULT_NO_SEXISM = false;
+    public static final int DEFAULT_PARALLELISM = 1;
+    public static final boolean DEFAULT_OVERWRITE = false;
+
     private final Scaling scaling;
     private final String targetDirectory;
     private final String suffix;
@@ -58,11 +61,6 @@ public class Session
         this.parallelism = parallelism;
         this.chunkNumber = chunkNumber;
         this.overwrite = overwrite;
-    }
-
-    public static Session getDefaultSession()
-    {
-        return new Options().toSession();
     }
 
     public Session withTable(Table table)
@@ -127,6 +125,35 @@ public class Session
                 this.parallelism,
                 chunkNumber,
                 this.overwrite);
+    }
+
+    private static Optional<Table> toTableOptional(String table)
+    {
+        if (table == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(Table.valueOf(table.toUpperCase()));
+        }
+        catch (IllegalArgumentException e) {
+            throw new InvalidOptionException("table", table);
+        }
+    }
+
+    public static Session getDefaultSession()
+    {
+        return new Session(
+                DEFAULT_SCALE,
+                DEFAULT_DIRECTORY,
+                DEFAULT_SUFFIX,
+                toTableOptional(DEFAULT_TABLE),
+                DEFAULT_NULL_STRING,
+                DEFAULT_SEPARATOR,
+                DEFAULT_DO_NOT_TERMINATE,
+                DEFAULT_NO_SEXISM,
+                DEFAULT_PARALLELISM,
+                DEFAULT_OVERWRITE);
     }
 
     public Session withNoSexism(boolean noSexism)

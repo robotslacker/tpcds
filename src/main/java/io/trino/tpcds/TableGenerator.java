@@ -14,11 +14,11 @@
 
 package io.trino.tpcds;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,8 +43,10 @@ public class TableGenerator
             return;
         }
 
-        try (OutputStreamWriter parentWriter = addFileWriterForTable(table);
-                OutputStreamWriter childWriter = table.hasChild() && !session.generateOnlyOneTable() ? addFileWriterForTable(table.getChild()) : null) {
+        try (
+                OutputStream parentWriter = addFileWriterForTable(table);
+                OutputStream childWriter = table.hasChild() && !session.generateOnlyOneTable() ? addFileWriterForTable(table.getChild()) : null)
+        {
             Results results = constructResults(table, session);
             for (List<List<String>> parentAndChildRows : results) {
                 if (parentAndChildRows.size() > 0) {
@@ -61,23 +63,34 @@ public class TableGenerator
         }
     }
 
-    private OutputStreamWriter addFileWriterForTable(Table table)
+    private OutputStream addFileWriterForTable(Table table)
             throws IOException
     {
         String path = getPath(table);
-        File file = new File(path);
-        boolean newFileCreated = file.createNewFile();
-        if (!newFileCreated) {
-            if (session.shouldOverwrite()) {
-                // truncate the file
-                new FileOutputStream(path).close();
+        if (path.startsWith("hdfs://"))
+        {
+            Configuration configuration = new Configuration();
+            FileSystem m_fs = FileSystem.get(configuration);
+            Path m_HdfsPath = new Path(path);
+            if (m_fs == null)
+            {
+                throw new TpcdsException("init Hadoop file system failed.");
             }
-            else {
-                throw new TpcdsException(format("File %s exists.  Remove it or run with the '--overwrite' option", path));
-            }
+            return m_fs.create(m_HdfsPath).getWrappedStream();
         }
-
-        return new OutputStreamWriter(new FileOutputStream(path, true), StandardCharsets.ISO_8859_1);
+        else {
+            File file = new File(path);
+            boolean newFileCreated = file.createNewFile();
+            if (!newFileCreated) {
+                if (session.shouldOverwrite()) {
+                    // truncate the file
+                    new FileOutputStream(path).close();
+                } else {
+                    throw new TpcdsException(format("File %s exists.  Remove it or run with the '--overwrite' option", path));
+                }
+            }
+            return new FileOutputStream(path, true);
+        }
     }
 
     private String getPath(Table table)
@@ -100,10 +113,10 @@ public class TableGenerator
                 session.getSuffix());
     }
 
-    private void writeResults(Writer writer, List<String> values)
+    private void writeResults(OutputStream writer, List<String> values)
             throws IOException
     {
-        writer.write(formatRow(values, session));
+        writer.write(formatRow(values, session).getBytes());
     }
 
     public static String formatRow(List<String> values, Session session)
