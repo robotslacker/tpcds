@@ -20,6 +20,7 @@ import org.apache.hadoop.fs.Path;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,10 +44,10 @@ public class TableGenerator
             return;
         }
 
-        try (
-                OutputStream parentWriter = addFileWriterForTable(table);
-                OutputStream childWriter = table.hasChild() && !session.generateOnlyOneTable() ? addFileWriterForTable(table.getChild()) : null)
+        try
         {
+            OutputStream parentWriter = addFileWriterForTable(table);
+            OutputStream childWriter = table.hasChild() && !session.generateOnlyOneTable() ? addFileWriterForTable(table.getChild()) : null;
             Results results = constructResults(table, session);
             for (List<List<String>> parentAndChildRows : results) {
                 if (parentAndChildRows.size() > 0) {
@@ -71,15 +72,41 @@ public class TableGenerator
         {
             Configuration configuration = new Configuration();
             FileSystem m_fs = FileSystem.get(configuration);
-            Path m_HdfsPath = new Path(path);
             if (m_fs == null)
             {
                 throw new TpcdsException("init Hadoop file system failed.");
+            }
+            Path m_HdfsPath = new Path(path);
+            Path m_HdfsParentPath = m_HdfsPath.getParent();
+            if (!m_fs.exists(m_HdfsParentPath))
+            {
+                m_fs.mkdirs(m_HdfsParentPath);
+            }
+            else
+            {
+                if (! m_fs.isDirectory(m_HdfsParentPath))
+                {
+                    throw new TpcdsException("Target is not a directory. [" + m_HdfsParentPath.toString() + "]");
+                }
+            }
+            boolean newFileCreated = m_fs.createNewFile(m_HdfsPath);
+            if (!newFileCreated) {
+                if (session.shouldOverwrite()) {
+                    // truncate the file
+                    m_fs.create(m_HdfsPath).close();
+                } else {
+                    throw new TpcdsException(format("File %s exists.  Remove it or run with the '--overwrite' option", path));
+                }
             }
             return m_fs.create(m_HdfsPath).getWrappedStream();
         }
         else {
             File file = new File(path);
+            File parent = file.getParentFile();
+            if (parent != null)
+            {
+                Files.createDirectories(parent.toPath());
+            }
             boolean newFileCreated = file.createNewFile();
             if (!newFileCreated) {
                 if (session.shouldOverwrite()) {
@@ -96,18 +123,20 @@ public class TableGenerator
     private String getPath(Table table)
     {
         if (session.getParallelism() > 1) {
-            return format("%s%s%s_%d_%d%s",
+            return format("%s%s%s%s%s_%d_%d%s",
                     session.getTargetDirectory(),
+                    File.separator,
+                    table.getName(),
                     File.separator,
                     table.getName(),
                     session.getChunkNumber(),
                     session.getParallelism(),
                     session.getSuffix());
         }
-
-        // TODO: path names for update case
-        return format("%s%s%s%s",
+        return format("%s%s%s%s%s%s",
                 session.getTargetDirectory(),
+                File.separator,
+                table.getName(),
                 File.separator,
                 table.getName(),
                 session.getSuffix());

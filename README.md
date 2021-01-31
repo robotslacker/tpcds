@@ -1,3 +1,65 @@
+# TPCDS Spark version
+This is a Java version of TPCDS, thanks to the open source author below.  
+I have made improvements on the basis of "her", and the improvements mainly include:  
+* 1: Support file creation on HDFS platform
+* 2: Support to run the program in Spark mode
+
+####Usage：
+* 1： generate file in local
+```
+   java -jar tpcds-1.5-SNAPSHOT-jar-with-dependencies.jar  <local target directory> [scale] [parallelism]
+   #  local target directory       A valid local path name, the program will create subdirectories under this directory 
+                                   and place files
+   #  scale                        The size of the data set, here is G as the unit, to generate 1T data set, 
+                                   here should be written as 1024, the default parameter is 1
+   #  parallelism                  Program parallelism, the default is the same as the Scale parameter. 
+                                   if the number of Scale has exceeded the number of system CPUs, it will 
+                                   be limited to the number of CPUs here)   
+```
+* 2:  generate file in hdfs
+```
+   java -jar tpcds-1.5-SNAPSHOT-jar-with-dependencies.jar  <hdfs target directory> [scale] [parallelism]
+   #  hdfs target directory        A valid hdfs path name, path name must start with "hdfs://". the program will create 
+                                   subdirectories under this directory and place files
+   #  scale                        The size of the data set, here is G as the unit, to generate 1T data set, 
+                                   here should be written as 1024, the default parameter is 1
+   #  parallelism                  Program parallelism, the default is the same as the Scale parameter. 
+                                   if the number of Scale has exceeded the number of system CPUs, it will 
+                                   be limited to the number of CPUs here)
+
+   If you got warn about "WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform...".
+   Please do : "export LD_LIBRARY_PATH=<Your hadoop software home>/lib/native"
+```
+* 3: generate file in spark
+```
+    ./spark-submit 	--class io.trino.tpcds.SparkDriver \
+				--master yarn --driver-memory 2g \
+				--executor-memory 2g --executor-cores 1 --num-executors 5 \
+				tpcds-1.5-SNAPSHOT-jar-with-dependencies.jar <hdfs target directory> [scale] [parallelism]
+   #  hdfs target directory        A valid hdfs path name, path name must start with "hdfs://". the program will create 
+                                   subdirectories under this directory and place files
+   #  scale                        The size of the data set, here is G as the unit, to generate 1T data set, 
+                                   here should be written as 1024, the default parameter is 1
+   #  parallelism                  Program parallelism, the default is the same as the Scale parameter. 
+                                   if the number of Scale has exceeded the 4 times num-executors, it will 
+                                   be limited to the number of 4 times num-executors here)
+
+```
+#### Suggest:
+* 1： There is no need to set parallelism when it is not necessary. The default value can bring better running effect in most cases.
+* 2： The example values of executor-memory(2G), executor-cores(1), and driver-memory(2G) usually do not need to be adjusted. 
+      Tests show that increasing these parameters will not bring much performance improvement apart from wasting resources.
+
+### Compile:
+```
+    git clone https://github.com/robotslacker/tpcds.git
+    cd tpcds
+    mvn install
+    
+    the tpcds-1.5-SNAPSHOT-jar-with-dependencies.jar will be placed in target directory.
+```
+*********************************************************************
+
 # TPCDS
 [![Maven Central](https://img.shields.io/maven-central/v/io.trino.tpcds/tpcds.svg?label=Maven%20Central)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.trino.tpcds%22)
 [![Build Status](https://travis-ci.com/trinodb/tpcds.svg?branch=master)](https://travis-ci.com/trinodb/tpcds)
