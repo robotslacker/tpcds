@@ -34,7 +34,13 @@ public class Driver
         int m_Scale = 1;
         int m_Thread = -1;
 
+
         // 程序参数 path,Scale,[Thread]
+        if (args.length == 1) {
+            usage();
+            System.exit(0);
+        }
+
         if (args.length >= 1) {
             m_OutPutPath = args[0].trim();
         }
@@ -84,7 +90,7 @@ public class Driver
                         finalM_Thread,
                         chunkNumber,
                         true);
-                TableGenerator tableGenerator = new TableGenerator(m_JobSession);
+                TableGenerator tableGenerator = new TableGenerator(m_JobSession, false);
                 tablesToGenerate.forEach(tableGenerator::generateTable);
             }).start();
         }

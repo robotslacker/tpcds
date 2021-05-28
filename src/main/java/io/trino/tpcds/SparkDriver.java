@@ -99,7 +99,7 @@ public class SparkDriver
                                     finalM_Thread,
                                     Integer.parseInt(s),
                                     true);
-                            TableGenerator tableGenerator = new TableGenerator(m_JobSession);
+                            TableGenerator tableGenerator = new TableGenerator(m_JobSession, true);
                             tablesToGenerate.forEach(tableGenerator::generateTable);
                             return true;
                         }

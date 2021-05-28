@@ -19,8 +19,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,10 +31,12 @@ import static java.util.Objects.requireNonNull;
 public class TableGenerator
 {
     private final Session session;
+    private boolean isSparkEnv;
 
-    public TableGenerator(Session session)
+    public TableGenerator(Session session, boolean isSparkEnv)
     {
         this.session = requireNonNull(session, "session is null");
+        this.isSparkEnv = isSparkEnv;
     }
 
     public void generateTable(Table table)
@@ -71,6 +73,23 @@ public class TableGenerator
         if (path.startsWith("hdfs://"))
         {
             Configuration configuration = new Configuration();
+            if (!this.isSparkEnv)
+            {
+                // 本地HDFS环境，需要初始化core-site等信息，Spark环境不需要这些
+                String m_HDFSConfPath = System.getenv("HADOOP_CONF_DIR");
+                if (m_HDFSConfPath == null)
+                {
+                    throw new TpcdsException("Missed env HADOOP_CONF_DIR. Please make sure set it before launch this.");
+                }
+                String m_ConfFilePath = Paths.get(m_HDFSConfPath,"core-site.xml").toString();
+                File m_ConfFile = new File(m_ConfFilePath);
+                if (!m_ConfFile.exists())
+                {
+                    throw new TpcdsException("Wrong HADOOP_CONF_DIR. core-site.xml does not exist.");
+                }
+                configuration.addResource(new Path(m_ConfFilePath));
+                configuration.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+            }
             FileSystem m_fs = FileSystem.get(configuration);
             if (m_fs == null)
             {
